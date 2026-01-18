@@ -1,0 +1,124 @@
+package services
+
+import (
+	"errors"
+	"go-br-task/internal/interfaces"
+	"go-br-task/internal/models"
+	"go-br-task/utils"
+	"log/slog"
+	"net/http"
+
+	"github.com/google/uuid"
+)
+
+type UserService struct {
+	storage interfaces.UserStorage
+}
+
+func NewUserService(storage interfaces.UserStorage) *UserService {
+	return &UserService{
+		storage: storage,
+	}
+}
+
+func (u *UserService) GetAllUser() (map[uuid.UUID]models.UserOutput, error) {
+	userWithoutPass := make(map[uuid.UUID]models.UserOutput)
+	users, err := u.storage.GetAllUser()
+	if err != nil {
+		slog.Error("Ошибка", err)
+		return nil, errors.New("ошибка при получении данных")
+	}
+	for id, user := range users {
+		userWithoutPass[id] = user.OutputUser()
+	}
+	return userWithoutPass, nil
+}
+
+func (u *UserService) EmailExist(email string) (int, error) {
+	exist, err := u.storage.ExistEmailUser(email)
+	if exist {
+		return http.StatusBadRequest, errors.New("пользователь с данным Email уже зарегистрирован")
+	}
+	if err != nil {
+		slog.Error("Ошибка", err)
+		return http.StatusInternalServerError, errors.New("ошибка при получении данных")
+	}
+	return 200, nil
+}
+
+func (u *UserService) CreateUser(user models.User) error {
+	user = models.User{
+		ID:       uuid.New(),
+		Name:     user.Name,
+		Email:    user.Email,
+		Password: user.Password,
+	}
+	if err := u.storage.SaveUser(user); err != nil {
+		slog.Error("Ошибка", err)
+		return errors.New("ошибка при сохранении")
+	}
+	return nil
+}
+
+func (u *UserService) UserExist(uuid uuid.UUID) (int, error) {
+	exist, err := u.storage.ExistUser(uuid)
+	if !exist {
+		return http.StatusNotFound, errors.New("пользователь не найден")
+	}
+	if err != nil {
+		slog.Error("Ошибка", err)
+		return http.StatusInternalServerError, errors.New("ошибка при получении данных")
+	}
+	return 200, nil
+}
+
+func (u *UserService) GetUserID(uuid uuid.UUID) (*models.UserOutput, int, error) {
+	user, err := u.storage.GetUserID(uuid)
+	if err != nil {
+		slog.Error("Ошибка", err)
+		return nil, http.StatusInternalServerError, errors.New("ошибка при получении данных")
+	}
+	userOutputPtr := user.OutputUser()
+	return &userOutputPtr, http.StatusOK, nil
+}
+
+func (u *UserService) DeleteUserID(uuid uuid.UUID) (int, error) {
+	if err := u.storage.DeleteUser(uuid); err != nil {
+		slog.Error("Ошибка", err)
+		return http.StatusInternalServerError, errors.New("ошибка при удалении данных")
+	}
+	return http.StatusOK, nil
+}
+
+func (u *UserService) UpdateUserID(uuid uuid.UUID, chuser models.ChangeUser) (int, error) {
+	user, err := u.storage.GetUserID(uuid)
+	if err != nil {
+		slog.Error("Ошибка", err)
+		return http.StatusInternalServerError, errors.New("ошибка при получении данных")
+	}
+	if (chuser.NewPassword != "" && chuser.OldPassword == "") || (chuser.NewPassword == "" && chuser.OldPassword != "") {
+		return http.StatusBadRequest, errors.New("при смене пароля необходимо ввести старый и новый пароль")
+	}
+	if utils.ChekChangeEmail(chuser) {
+		exist, erre := u.storage.ExistEmailUser(chuser.Email)
+		if exist {
+			return http.StatusBadRequest, errors.New("пользователь с данным Email уже зарегистрирован")
+		}
+		if erre != nil {
+			slog.Error("Ошибка", erre)
+			return http.StatusInternalServerError, errors.New("ошибка при получении данных")
+		}
+		user.Email = chuser.Email
+	}
+	if utils.ChekChangePass(chuser) {
+		if user.Password != chuser.OldPassword {
+			return http.StatusBadRequest, errors.New("cтарый пароль не совпадает с введенным")
+		}
+		user.Password = chuser.NewPassword
+	}
+	if errs := u.storage.SaveUser(*user); errs != nil {
+		slog.Error("Ошибка", errs)
+		return http.StatusInternalServerError, errors.New("ошибка при сохранении")
+	}
+	return http.StatusOK, nil
+}
