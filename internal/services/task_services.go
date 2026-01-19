@@ -5,7 +5,6 @@ import (
 	"go-br-task/internal/interfaces"
 	"go-br-task/internal/models"
 	"log/slog"
-	"net/http"
 	"time"
 
 	"github.com/google/uuid"
@@ -21,16 +20,16 @@ func NewTaskService(storage interfaces.TasksStorage) *TasksService {
 	}
 }
 
-func (s *TasksService) GetAllTask() (map[uuid.UUID]models.Task, error) {
+func (s *TasksService) GetAllTask() (map[uuid.UUID]models.Task, int, error) {
 	task, err := s.storage.GetAllTask()
 	if err != nil {
 		slog.Error("Ошибка", err)
-		return nil, errors.New("ошибка при получении данных")
+		return nil, 500, errors.New("ошибка при получении данных")
 	}
-	return task, nil
+	return task, 200, nil
 }
 
-func (s *TasksService) CreateTask(task models.Task) error {
+func (s *TasksService) CreateTask(task models.Task) (int, error) {
 	task = models.Task{
 		ID:          uuid.New(),
 		Title:       task.Title,
@@ -41,28 +40,28 @@ func (s *TasksService) CreateTask(task models.Task) error {
 	}
 	if err := s.storage.SaveTask(task); err != nil {
 		slog.Error("Ошибка", err)
-		return errors.New("ошибка при сохранении")
+		return 500, errors.New("ошибка при сохранении")
 	}
-	return nil
+	return 200, nil
 }
 
 func (s *TasksService) GetTaskID(uuid uuid.UUID) (*models.Task, int, error) {
 	task, err := s.storage.GetTaskID(uuid)
 	if err != nil {
 		slog.Error("Ошибка", err)
-		return nil, http.StatusInternalServerError, errors.New("ошибка при получении данных")
+		return nil, 500, errors.New("ошибка при получении данных")
 	}
-	return task, http.StatusOK, nil
+	return task, 200, nil
 }
 
 func (s *TasksService) TaskExist(uuid uuid.UUID) (int, error) {
 	exist, err := s.storage.ExistTask(uuid)
 	if !exist {
-		return http.StatusNotFound, errors.New("задача не найдена")
+		return 404, errors.New("задача не найдена")
 	}
 	if err != nil {
 		slog.Error("Ошибка", err)
-		return http.StatusInternalServerError, errors.New("ошибка при получении данных")
+		return 500, errors.New("ошибка при получении данных")
 	}
 	return 200, nil
 }
@@ -70,35 +69,35 @@ func (s *TasksService) TaskExist(uuid uuid.UUID) (int, error) {
 func (s *TasksService) DeleteTaskID(uuid uuid.UUID) (int, error) {
 	if err := s.storage.DeleteTask(uuid); err != nil {
 		slog.Error("Ошибка", err)
-		return http.StatusInternalServerError, errors.New("ошибка при удалении данных")
+		return 500, errors.New("ошибка при удалении данных")
 	}
-	return http.StatusOK, nil
+	return 200, nil
 }
 
 func (s *TasksService) UpdateTaskID(uuid uuid.UUID, status models.TaskStatus) (int, error) {
 	task, err := s.storage.GetTaskID(uuid)
 	if err != nil {
 		slog.Error("Ошибка", err)
-		return http.StatusInternalServerError, errors.New("ошибка при получении данных")
+		return 500, errors.New("ошибка при получении данных")
 	}
 	switch status {
 	case models.Progress, models.NewT:
 		task.Status = status
 		if err = s.storage.SaveTask(*task); err != nil {
 			slog.Error("Ошибка", err)
-			return http.StatusInternalServerError, errors.New("ошибка при обновлении статуса")
+			return 500, errors.New("ошибка при обновлении статуса")
 		}
-		return http.StatusOK, nil
+		return 200, nil
 	case models.Completed:
 		task.Status = status
 		now := time.Now()
 		task.CompletedAt = &now
 		if err = s.storage.SaveTask(*task); err != nil {
 			slog.Error("Ошибка", err)
-			return http.StatusInternalServerError, errors.New("ошибка при обновлении статуса")
+			return 500, errors.New("ошибка при обновлении статуса")
 		}
-		return http.StatusOK, nil
+		return 200, nil
 	default:
-		return http.StatusBadRequest, errors.New("данного статуса не существует")
+		return 400, errors.New("данного статуса не существует")
 	}
 }

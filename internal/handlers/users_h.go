@@ -3,7 +3,6 @@ package handlers
 import (
 	"go-br-task/internal/models"
 	"go-br-task/utils/messages"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -11,16 +10,13 @@ import (
 
 // Получить всеx пользователей
 func (h *HandlerUser) GetUser(c *gin.Context) {
-	user, err := h.userService.GetAllUser()
+	user, httpStatus, err := h.userService.GetAllUser()
 	if err != nil {
-		c.JSONP(http.StatusInternalServerError, gin.H{
-			"status":  "error",
-			"message": err.Error(),
-		})
+		messages.StatusHttpError(c, httpStatus, err)
 		return
 	}
-	c.JSONP(http.StatusOK, gin.H{
-		"status": "ok",
+	c.JSONP(httpStatus, gin.H{
+		"status": "OK",
 		"users":  user,
 	})
 	return
@@ -30,28 +26,19 @@ func (h *HandlerUser) GetUser(c *gin.Context) {
 func (h *HandlerUser) CreateUser(c *gin.Context) {
 	var user models.User
 	if errr := c.ShouldBindJSON(&user); errr != nil {
-		messages.IncorrectData(c, errr)
+		messages.StatusBadRequestDataH(c, errr)
 		return
 	}
 	httpStatus, err := h.userService.EmailExist(user.Email)
 	if httpStatus == 200 {
-		if err = h.userService.CreateUser(user); err != nil {
-			c.JSONP(http.StatusInternalServerError, gin.H{
-				"status":  "error",
-				"message": err.Error(),
-			})
+		if httpStatus, err = h.userService.CreateUser(user); err != nil {
+			messages.StatusHttpError(c, httpStatus, err)
 			return
 		}
-		c.JSONP(http.StatusOK, gin.H{
-			"status": "ok",
-			"text":   "Пользователь создан",
-		})
+		messages.StatusHttpSuccess(c)
 		return
 	}
-	c.JSONP(httpStatus, gin.H{
-		"status":  "error",
-		"message": err.Error(),
-	})
+	messages.StatusHttpError(c, httpStatus, err)
 	return
 }
 
@@ -62,10 +49,7 @@ func (h *HandlerUser) GetUserID(c *gin.Context) {
 	if httpStatusE == 200 {
 		user, httpStatus, err := h.userService.GetUserID(id)
 		if err != nil {
-			c.JSONP(httpStatus, gin.H{
-				"status":  "error",
-				"message": err.Error(),
-			})
+			messages.StatusHttpError(c, httpStatus, err)
 			return
 		}
 		c.JSONP(httpStatus, gin.H{
@@ -74,10 +58,7 @@ func (h *HandlerUser) GetUserID(c *gin.Context) {
 		})
 		return
 	}
-	c.JSONP(httpStatusE, gin.H{
-		"status":  "error",
-		"message": errE.Error(),
-	})
+	messages.StatusHttpError(c, httpStatusE, errE)
 	return
 }
 
@@ -88,22 +69,13 @@ func (h *HandlerUser) DeleteUserID(c *gin.Context) {
 	if httpStatus == 200 {
 		httpStatus, err = h.userService.DeleteUserID(id)
 		if err != nil {
-			c.JSONP(httpStatus, gin.H{
-				"status":  "error",
-				"message": err.Error(),
-			})
+			messages.StatusHttpError(c, httpStatus, err)
 			return
 		}
-		c.JSONP(httpStatus, gin.H{
-			"status":  "ok",
-			"message": "Пользователь удален",
-		})
+		messages.StatusHttpSuccess(c)
 		return
 	}
-	c.JSONP(httpStatus, gin.H{
-		"status":  "error",
-		"message": err.Error(),
-	})
+	messages.StatusHttpError(c, httpStatus, err)
 	return
 }
 
@@ -111,7 +83,7 @@ func (h *HandlerUser) DeleteUserID(c *gin.Context) {
 func (h *HandlerUser) UpdateUserID(c *gin.Context) {
 	var chuser models.ChangeUser
 	if errr := c.ShouldBindJSON(&chuser); errr != nil {
-		messages.IncorrectData(c, errr)
+		messages.StatusBadRequestDataH(c, errr)
 		return
 	}
 	id, _ := uuid.Parse(c.Param("id"))
@@ -119,21 +91,12 @@ func (h *HandlerUser) UpdateUserID(c *gin.Context) {
 	if httpStatus == 200 {
 		httpStatus, err = h.userService.UpdateUserID(id, chuser)
 		if err != nil {
-			c.JSONP(httpStatus, gin.H{
-				"status":  "error",
-				"message": err.Error(),
-			})
+			messages.StatusHttpError(c, httpStatus, err)
 			return
 		}
-		c.JSONP(httpStatus, gin.H{
-			"status":  "ok",
-			"message": "Данные обновлены",
-		})
+		messages.StatusHttpSuccess(c)
 		return
 	}
-	c.JSONP(httpStatus, gin.H{
-		"status":  "error",
-		"message": err.Error(),
-	})
+	messages.StatusHttpError(c, httpStatus, err)
 	return
 }

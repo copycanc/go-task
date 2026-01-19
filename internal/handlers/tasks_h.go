@@ -3,7 +3,6 @@ package handlers
 import (
 	"go-br-task/internal/models"
 	"go-br-task/utils/messages"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -11,16 +10,13 @@ import (
 
 // Получить все задачи
 func (h *Handler) GetTask(c *gin.Context) {
-	taskList, err := h.taskService.GetAllTask()
+	taskList, httpStatus, err := h.taskService.GetAllTask()
 	if err != nil {
-		c.JSONP(http.StatusInternalServerError, gin.H{
-			"status":  "error",
-			"message": err.Error(),
-		})
+		messages.StatusHttpError(c, httpStatus, err)
 		return
 	}
-	c.JSONP(http.StatusOK, gin.H{
-		"status": "ok",
+	c.JSONP(httpStatus, gin.H{
+		"status": "OK",
 		"tasks":  taskList,
 	})
 	return
@@ -30,20 +26,14 @@ func (h *Handler) GetTask(c *gin.Context) {
 func (h *Handler) CreateTask(c *gin.Context) {
 	var task models.Task
 	if err := c.ShouldBindJSON(&task); err != nil {
-		messages.IncorrectData(c, err)
+		messages.StatusBadRequestDataH(c, err)
 		return
 	}
-	if err := h.taskService.CreateTask(task); err != nil {
-		c.JSONP(http.StatusInternalServerError, gin.H{
-			"status":  "error",
-			"message": err.Error(),
-		})
+	if httpStatus, err := h.taskService.CreateTask(task); err != nil {
+		messages.StatusHttpError(c, httpStatus, err)
 		return
 	}
-	c.JSONP(http.StatusOK, gin.H{
-		"status": "ok",
-		"text":   "Задача создана",
-	})
+	messages.StatusHttpSuccess(c)
 	return
 }
 
@@ -54,22 +44,16 @@ func (h *Handler) GetTaskID(c *gin.Context) {
 	if httpStatusE == 200 {
 		task, httpStatus, err := h.taskService.GetTaskID(id)
 		if err != nil {
-			c.JSONP(httpStatus, gin.H{
-				"status":  "error",
-				"message": err.Error(),
-			})
+			messages.StatusHttpError(c, httpStatus, err)
 			return
 		}
 		c.JSONP(httpStatus, gin.H{
-			"status": "ok",
+			"status": "OK",
 			"task":   task,
 		})
 		return
 	}
-	c.JSONP(httpStatusE, gin.H{
-		"status":  "error",
-		"message": errE.Error(),
-	})
+	messages.StatusHttpError(c, httpStatusE, errE)
 	return
 }
 
@@ -80,22 +64,13 @@ func (h *Handler) DeleteTaskID(c *gin.Context) {
 	if httpStatus == 200 {
 		httpStatus, err = h.taskService.DeleteTaskID(id)
 		if err != nil {
-			c.JSONP(httpStatus, gin.H{
-				"status":  "error",
-				"message": err.Error(),
-			})
+			messages.StatusHttpError(c, httpStatus, err)
 			return
 		}
-		c.JSONP(httpStatus, gin.H{
-			"status":  "ok",
-			"message": "Задача удалена",
-		})
+		messages.StatusHttpSuccess(c)
 		return
 	}
-	c.JSONP(httpStatus, gin.H{
-		"status":  "error",
-		"message": err.Error(),
-	})
+	messages.StatusHttpError(c, httpStatus, err)
 	return
 }
 
@@ -104,28 +79,19 @@ func (h *Handler) UpdateTaskID(c *gin.Context) {
 	id, _ := uuid.Parse(c.Param("id"))
 	var taskUpdate models.TaskUpdate
 	if errr := c.ShouldBindJSON(&taskUpdate); errr != nil {
-		messages.IncorrectData(c, errr)
+		messages.StatusBadRequestDataH(c, errr)
 		return
 	}
 	httpStatus, err := h.taskService.TaskExist(id)
 	if httpStatus == 200 {
 		httpStatus, err = h.taskService.UpdateTaskID(id, taskUpdate.Status)
 		if err != nil {
-			c.JSONP(httpStatus, gin.H{
-				"status":  "error",
-				"message": err.Error(),
-			})
+			messages.StatusHttpError(c, httpStatus, err)
 			return
 		}
-		c.JSONP(httpStatus, gin.H{
-			"status":  "ok",
-			"message": "Задача обновлена",
-		})
+		messages.StatusHttpSuccess(c)
 		return
 	}
-	c.JSONP(httpStatus, gin.H{
-		"status":  "error",
-		"message": err.Error(),
-	})
+	messages.StatusHttpError(c, httpStatus, err)
 	return
 }

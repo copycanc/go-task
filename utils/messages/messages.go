@@ -6,10 +6,22 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Сообщение "Неверные данные"
-func IncorrectData(c *gin.Context, err error) {
+func StatusBadRequestDataH(c *gin.Context, err error) {
 	c.JSONP(http.StatusBadRequest, gin.H{
 		"status":  "error",
-		"message": "Неверные данные: " + err.Error(),
+		"message": "неверные данные" + err.Error(),
+	})
+}
+
+func StatusHttpError(c *gin.Context, httpStatus int, err error) {
+	c.JSONP(httpStatus, gin.H{
+		"status":  "error",
+		"message": err.Error(),
+	})
+}
+
+func StatusHttpSuccess(c *gin.Context) {
+	c.JSONP(http.StatusOK, gin.H{
+		"status": "OK",
 	})
 }
