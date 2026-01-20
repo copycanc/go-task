@@ -1,27 +1,14 @@
-package handlers
+package internal
 
 import (
-	"go-br-task/internal/services"
+	"go-br-task/internal/task"
+	"go-br-task/internal/user"
 
 	"github.com/gin-gonic/gin"
 )
 
-type Handler struct {
-	taskService *services.TasksService
-}
-type HandlerUser struct {
-	userService *services.UserService
-}
-
-func NewHandlerUser(userService *services.UserService) *HandlerUser {
-	return &HandlerUser{userService: userService}
-}
-func NewHandler(taskService *services.TasksService) *Handler {
-	return &Handler{taskService: taskService}
-}
-
 // Функция для инициализации эндпоинтов
-func Init(r *gin.Engine, h *Handler, u *HandlerUser) {
+func Init(r *gin.Engine, h *task.HandlerTask, u *user.HandlerUser) {
 	// Получить все задачи
 	r.GET("/tasks", h.GetTask)
 	// Создать новую задачу

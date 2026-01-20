@@ -1,9 +1,9 @@
 package main
 
 import (
-	"go-br-task/internal/handlers"
-	"go-br-task/internal/services"
-	"go-br-task/internal/storages"
+	"go-br-task/internal"
+	"go-br-task/internal/task"
+	"go-br-task/internal/user"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -13,15 +13,15 @@ import (
 )
 
 func main() {
-	storage_task := storages.NewMapStorageTask()
-	storage_user := storages.NewMapStorageUser()
-	service_task := services.NewTaskService(storage_task)
-	service_user := services.NewUserService(storage_user)
-	handler_user := handlers.NewHandlerUser(service_user)
-	handler_task := handlers.NewHandler(service_task)
+	storage_task := task.NewMapStorageTask()
+	storage_user := user.NewMapStorageUser()
+	service_task := task.NewTaskService(storage_task)
+	service_user := user.NewUserService(storage_user)
+	handler_user := user.NewHandlerUser(service_user)
+	handler_task := task.NewHandler(service_task)
 
 	r := gin.Default()
-	handlers.Init(r, handler_task, handler_user)
+	internal.Init(r, handler_task, handler_user)
 	go r.Run(":8080")
 
 	Shutdown()

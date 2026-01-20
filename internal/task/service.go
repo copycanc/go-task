@@ -1,9 +1,7 @@
-package services
+package task
 
 import (
 	"errors"
-	"go-br-task/internal/interfaces"
-	"go-br-task/internal/models"
 	"log/slog"
 	"time"
 
@@ -11,16 +9,16 @@ import (
 )
 
 type TasksService struct {
-	storage interfaces.TasksStorage
+	storage TasksStorage
 }
 
-func NewTaskService(storage interfaces.TasksStorage) *TasksService {
+func NewTaskService(storage TasksStorage) *TasksService {
 	return &TasksService{
 		storage: storage,
 	}
 }
 
-func (s *TasksService) GetAllTask() (map[uuid.UUID]models.Task, int, error) {
+func (s *TasksService) GetAllTask() (map[uuid.UUID]Task, int, error) {
 	task, err := s.storage.GetAllTask()
 	if err != nil {
 		slog.Error("Ошибка", err)
@@ -29,12 +27,12 @@ func (s *TasksService) GetAllTask() (map[uuid.UUID]models.Task, int, error) {
 	return task, 200, nil
 }
 
-func (s *TasksService) CreateTask(task models.Task) (int, error) {
-	task = models.Task{
+func (s *TasksService) CreateTask(task Task) (int, error) {
+	task = Task{
 		ID:          uuid.New(),
 		Title:       task.Title,
 		Description: task.Description,
-		Status:      models.NewT,
+		Status:      NewT,
 		CreatedAt:   time.Now(),
 		CompletedAt: nil,
 	}
@@ -45,7 +43,7 @@ func (s *TasksService) CreateTask(task models.Task) (int, error) {
 	return 200, nil
 }
 
-func (s *TasksService) GetTaskID(uuid uuid.UUID) (*models.Task, int, error) {
+func (s *TasksService) GetTaskID(uuid uuid.UUID) (*Task, int, error) {
 	task, err := s.storage.GetTaskID(uuid)
 	if err != nil {
 		slog.Error("Ошибка", err)
@@ -74,21 +72,21 @@ func (s *TasksService) DeleteTaskID(uuid uuid.UUID) (int, error) {
 	return 200, nil
 }
 
-func (s *TasksService) UpdateTaskID(uuid uuid.UUID, status models.TaskStatus) (int, error) {
+func (s *TasksService) UpdateTaskID(uuid uuid.UUID, status TaskStatus) (int, error) {
 	task, err := s.storage.GetTaskID(uuid)
 	if err != nil {
 		slog.Error("Ошибка", err)
 		return 500, errors.New("ошибка при получении данных")
 	}
 	switch status {
-	case models.Progress, models.NewT:
+	case Progress, NewT:
 		task.Status = status
 		if err = s.storage.SaveTask(*task); err != nil {
 			slog.Error("Ошибка", err)
 			return 500, errors.New("ошибка при обновлении статуса")
 		}
 		return 200, nil
-	case models.Completed:
+	case Completed:
 		task.Status = status
 		now := time.Now()
 		task.CompletedAt = &now

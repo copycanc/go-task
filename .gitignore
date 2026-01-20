@@ -1,0 +1,18 @@
+# Go
+*.exe
+*.exe~
+*.test
+bin/
+dist/
+
+# GoLand
+.idea/
+*.iml
+*.iws
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
