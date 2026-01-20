@@ -1,27 +1,24 @@
-package services
+package user
 
 import (
 	"errors"
-	"go-br-task/internal/interfaces"
-	"go-br-task/internal/models"
-	"go-br-task/utils"
 	"log/slog"
 
 	"github.com/google/uuid"
 )
 
 type UserService struct {
-	storage interfaces.UserStorage
+	storage UserStorage
 }
 
-func NewUserService(storage interfaces.UserStorage) *UserService {
+func NewUserService(storage UserStorage) *UserService {
 	return &UserService{
 		storage: storage,
 	}
 }
 
-func (u *UserService) GetAllUser() (map[uuid.UUID]models.UserOutput, int, error) {
-	userWithoutPass := make(map[uuid.UUID]models.UserOutput)
+func (u *UserService) GetAllUser() (map[uuid.UUID]UserOutput, int, error) {
+	userWithoutPass := make(map[uuid.UUID]UserOutput)
 	users, err := u.storage.GetAllUser()
 	if err != nil {
 		slog.Error("Ошибка", err)
@@ -45,8 +42,8 @@ func (u *UserService) EmailExist(email string) (int, error) {
 	return 200, nil
 }
 
-func (u *UserService) CreateUser(user models.User) (int, error) {
-	user = models.User{
+func (u *UserService) CreateUser(user User) (int, error) {
+	user = User{
 		ID:       uuid.New(),
 		Name:     user.Name,
 		Email:    user.Email,
@@ -71,7 +68,7 @@ func (u *UserService) UserExist(uuid uuid.UUID) (int, error) {
 	return 200, nil
 }
 
-func (u *UserService) GetUserID(uuid uuid.UUID) (*models.UserOutput, int, error) {
+func (u *UserService) GetUserID(uuid uuid.UUID) (*UserOutput, int, error) {
 	user, err := u.storage.GetUserID(uuid)
 	if err != nil {
 		slog.Error("Ошибка", err)
@@ -89,7 +86,7 @@ func (u *UserService) DeleteUserID(uuid uuid.UUID) (int, error) {
 	return 200, nil
 }
 
-func (u *UserService) UpdateUserID(uuid uuid.UUID, chuser models.ChangeUser) (int, error) {
+func (u *UserService) UpdateUserID(uuid uuid.UUID, chuser ChangeUser) (int, error) {
 	user, err := u.storage.GetUserID(uuid)
 	if err != nil {
 		slog.Error("Ошибка", err)
@@ -98,7 +95,7 @@ func (u *UserService) UpdateUserID(uuid uuid.UUID, chuser models.ChangeUser) (in
 	if (chuser.NewPassword != "" && chuser.OldPassword == "") || (chuser.NewPassword == "" && chuser.OldPassword != "") {
 		return 400, errors.New("при смене пароля необходимо ввести старый и новый пароль")
 	}
-	if utils.ChekChangeEmail(chuser) {
+	if ChekChangeEmail(chuser) {
 		exist, erre := u.storage.ExistEmailUser(chuser.Email)
 		if exist {
 			return 400, errors.New("пользователь с данным Email уже зарегистрирован")
@@ -109,7 +106,7 @@ func (u *UserService) UpdateUserID(uuid uuid.UUID, chuser models.ChangeUser) (in
 		}
 		user.Email = chuser.Email
 	}
-	if utils.ChekChangePass(chuser) {
+	if ChekChangePass(chuser) {
 		if user.Password != chuser.OldPassword {
 			return 400, errors.New("cтарый пароль не совпадает с введенным")
 		}
@@ -120,4 +117,18 @@ func (u *UserService) UpdateUserID(uuid uuid.UUID, chuser models.ChangeUser) (in
 		return 500, errors.New("ошибка при сохранении")
 	}
 	return 200, nil
+}
+
+func ChekChangePass(u ChangeUser) bool {
+	if u.NewPassword != "" && u.OldPassword != "" {
+		return true
+	}
+	return false
+}
+
+func ChekChangeEmail(u ChangeUser) bool {
+	if u.Email != "" {
+		return true
+	}
+	return false
 }

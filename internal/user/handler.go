@@ -1,18 +1,25 @@
-package handlers
+package user
 
 import (
-	"go-br-task/internal/models"
-	"go-br-task/utils/messages"
+	"go-br-task/internal/message"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
+type HandlerUser struct {
+	userService *UserService
+}
+
+func NewHandlerUser(userService *UserService) *HandlerUser {
+	return &HandlerUser{userService: userService}
+}
+
 // Получить всеx пользователей
 func (h *HandlerUser) GetUser(c *gin.Context) {
 	user, httpStatus, err := h.userService.GetAllUser()
 	if err != nil {
-		messages.StatusHttpError(c, httpStatus, err)
+		message.StatusHttpError(c, httpStatus, err)
 		return
 	}
 	c.JSONP(httpStatus, gin.H{
@@ -23,22 +30,22 @@ func (h *HandlerUser) GetUser(c *gin.Context) {
 }
 
 // Создать нового пользователя
-func (h *HandlerUser) CreateUser(c *gin.Context) {
-	var user models.User
+func (h HandlerUser) CreateUser(c *gin.Context) {
+	var user User
 	if errr := c.ShouldBindJSON(&user); errr != nil {
-		messages.StatusBadRequestDataH(c, errr)
+		message.StatusBadRequestDataH(c, errr)
 		return
 	}
 	httpStatus, err := h.userService.EmailExist(user.Email)
 	if httpStatus == 200 {
 		if httpStatus, err = h.userService.CreateUser(user); err != nil {
-			messages.StatusHttpError(c, httpStatus, err)
+			message.StatusHttpError(c, httpStatus, err)
 			return
 		}
-		messages.StatusHttpSuccess(c)
+		message.StatusHttpSuccess(c)
 		return
 	}
-	messages.StatusHttpError(c, httpStatus, err)
+	message.StatusHttpError(c, httpStatus, err)
 	return
 }
 
@@ -49,7 +56,7 @@ func (h *HandlerUser) GetUserID(c *gin.Context) {
 	if httpStatusE == 200 {
 		user, httpStatus, err := h.userService.GetUserID(id)
 		if err != nil {
-			messages.StatusHttpError(c, httpStatus, err)
+			message.StatusHttpError(c, httpStatus, err)
 			return
 		}
 		c.JSONP(httpStatus, gin.H{
@@ -58,7 +65,7 @@ func (h *HandlerUser) GetUserID(c *gin.Context) {
 		})
 		return
 	}
-	messages.StatusHttpError(c, httpStatusE, errE)
+	message.StatusHttpError(c, httpStatusE, errE)
 	return
 }
 
@@ -69,21 +76,21 @@ func (h *HandlerUser) DeleteUserID(c *gin.Context) {
 	if httpStatus == 200 {
 		httpStatus, err = h.userService.DeleteUserID(id)
 		if err != nil {
-			messages.StatusHttpError(c, httpStatus, err)
+			message.StatusHttpError(c, httpStatus, err)
 			return
 		}
-		messages.StatusHttpSuccess(c)
+		message.StatusHttpSuccess(c)
 		return
 	}
-	messages.StatusHttpError(c, httpStatus, err)
+	message.StatusHttpError(c, httpStatus, err)
 	return
 }
 
 // Изменить пользователя
 func (h *HandlerUser) UpdateUserID(c *gin.Context) {
-	var chuser models.ChangeUser
+	var chuser ChangeUser
 	if errr := c.ShouldBindJSON(&chuser); errr != nil {
-		messages.StatusBadRequestDataH(c, errr)
+		message.StatusBadRequestDataH(c, errr)
 		return
 	}
 	id, _ := uuid.Parse(c.Param("id"))
@@ -91,12 +98,12 @@ func (h *HandlerUser) UpdateUserID(c *gin.Context) {
 	if httpStatus == 200 {
 		httpStatus, err = h.userService.UpdateUserID(id, chuser)
 		if err != nil {
-			messages.StatusHttpError(c, httpStatus, err)
+			message.StatusHttpError(c, httpStatus, err)
 			return
 		}
-		messages.StatusHttpSuccess(c)
+		message.StatusHttpSuccess(c)
 		return
 	}
-	messages.StatusHttpError(c, httpStatus, err)
+	message.StatusHttpError(c, httpStatus, err)
 	return
 }

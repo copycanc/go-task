@@ -1,19 +1,17 @@
-package storages
+package user
 
 import (
-	"go-br-task/internal/models"
-
 	"github.com/google/uuid"
 )
 
 type MapStorageUser struct {
-	storageUserMap map[uuid.UUID]models.User
+	storageUserMap map[uuid.UUID]User
 }
 
 func NewMapStorageUser() *MapStorageUser {
-	return &MapStorageUser{storageUserMap: make(map[uuid.UUID]models.User)}
+	return &MapStorageUser{storageUserMap: make(map[uuid.UUID]User)}
 }
-func (m *MapStorageUser) GetAllUser() (map[uuid.UUID]models.User, error) {
+func (m *MapStorageUser) GetAllUser() (map[uuid.UUID]User, error) {
 	return m.storageUserMap, nil
 }
 
@@ -26,12 +24,12 @@ func (m *MapStorageUser) ExistEmailUser(email string) (bool, error) {
 	return false, nil
 }
 
-func (m *MapStorageUser) SaveUser(user models.User) error {
+func (m *MapStorageUser) SaveUser(user User) error {
 	m.storageUserMap[user.ID] = user
 	return nil
 }
 
-func (m *MapStorageUser) GetUserID(id uuid.UUID) (*models.User, error) {
+func (m *MapStorageUser) GetUserID(id uuid.UUID) (*User, error) {
 	user, _ := m.storageUserMap[id]
 	return &user, nil
 }
