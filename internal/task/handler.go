@@ -46,7 +46,11 @@ func (h *HandlerTask) Create(c *gin.Context) {
 
 // Получить задачу по ID
 func (h *HandlerTask) Get(c *gin.Context) {
-	id, _ := uuid.Parse(c.Param("id"))
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		message.StatusBadRequestDataH(c, err)
+		return
+	}
 	httpStatusE, errE := h.taskService.TaskExist(id)
 	if httpStatusE == 200 {
 		task, httpStatus, err := h.taskService.GetTaskID(id)
@@ -66,7 +70,11 @@ func (h *HandlerTask) Get(c *gin.Context) {
 
 // Удалить задачу по ID
 func (h *HandlerTask) Delete(c *gin.Context) {
-	id, _ := uuid.Parse(c.Param("id"))
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		message.StatusBadRequestDataH(c, err)
+		return
+	}
 	httpStatus, err := h.taskService.TaskExist(id)
 	if httpStatus == 200 {
 		httpStatus, err = h.taskService.DeleteTaskID(id)
@@ -83,7 +91,11 @@ func (h *HandlerTask) Delete(c *gin.Context) {
 
 // Изменить статус задачи
 func (h *HandlerTask) Update(c *gin.Context) {
-	id, _ := uuid.Parse(c.Param("id"))
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		message.StatusBadRequestDataH(c, err)
+		return
+	}
 	var taskUpdate TaskUpdate
 	if errr := c.ShouldBindJSON(&taskUpdate); errr != nil {
 		message.StatusBadRequestDataH(c, errr)
