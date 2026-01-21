@@ -9,7 +9,7 @@ import (
 func StatusBadRequestDataH(c *gin.Context, err error) {
 	c.JSONP(http.StatusBadRequest, gin.H{
 		"status":  "error",
-		"message": "неверные данные" + err.Error(),
+		"message": "неверные данные " + err.Error(),
 	})
 }
 

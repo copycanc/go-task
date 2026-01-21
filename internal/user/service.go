@@ -21,7 +21,7 @@ func (u *UserService) GetAllUser() (map[uuid.UUID]UserOutput, int, error) {
 	userWithoutPass := make(map[uuid.UUID]UserOutput)
 	users, err := u.storage.GetAllUser()
 	if err != nil {
-		slog.Error("Ошибка", err)
+		slog.Error("STORAGE: get user failed", "err", err)
 		return nil, 500, errors.New("ошибка при получении данных")
 	}
 	for id, user := range users {
@@ -32,12 +32,12 @@ func (u *UserService) GetAllUser() (map[uuid.UUID]UserOutput, int, error) {
 
 func (u *UserService) EmailExist(email string) (int, error) {
 	exist, err := u.storage.ExistEmailUser(email)
+	if err != nil {
+		slog.Error("STORAGE: get user failed", "err", err)
+		return 500, errors.New("ошибка при получении данных")
+	}
 	if exist {
 		return 400, errors.New("пользователь с данным Email уже зарегистрирован")
-	}
-	if err != nil {
-		slog.Error("Ошибка", err)
-		return 500, errors.New("ошибка при получении данных")
 	}
 	return 200, nil
 }
@@ -50,7 +50,7 @@ func (u *UserService) CreateUser(user User) (int, error) {
 		Password: user.Password,
 	}
 	if err := u.storage.SaveUser(user); err != nil {
-		slog.Error("Ошибка", err)
+		slog.Error("STORAGE: save user failed", "err", err)
 		return 500, errors.New("ошибка при сохранении")
 	}
 	return 200, nil
@@ -58,12 +58,12 @@ func (u *UserService) CreateUser(user User) (int, error) {
 
 func (u *UserService) UserExist(uuid uuid.UUID) (int, error) {
 	exist, err := u.storage.ExistUser(uuid)
+	if err != nil {
+		slog.Error("STORAGE: get user failed", "err", err)
+		return 500, errors.New("ошибка при получении данных")
+	}
 	if !exist {
 		return 404, errors.New("пользователь не найден")
-	}
-	if err != nil {
-		slog.Error("Ошибка", err)
-		return 500, errors.New("ошибка при получении данных")
 	}
 	return 200, nil
 }
@@ -71,7 +71,7 @@ func (u *UserService) UserExist(uuid uuid.UUID) (int, error) {
 func (u *UserService) GetUserID(uuid uuid.UUID) (*UserOutput, int, error) {
 	user, err := u.storage.GetUserID(uuid)
 	if err != nil {
-		slog.Error("Ошибка", err)
+		slog.Error("STORAGE: get user failed", "err", err)
 		return nil, 500, errors.New("ошибка при получении данных")
 	}
 	userOutputPtr := user.OutputUser()
@@ -80,7 +80,7 @@ func (u *UserService) GetUserID(uuid uuid.UUID) (*UserOutput, int, error) {
 
 func (u *UserService) DeleteUserID(uuid uuid.UUID) (int, error) {
 	if err := u.storage.DeleteUser(uuid); err != nil {
-		slog.Error("Ошибка", err)
+		slog.Error("STORAGE: delete user failed", "err", err)
 		return 500, errors.New("ошибка при удалении данных")
 	}
 	return 200, nil
@@ -89,7 +89,7 @@ func (u *UserService) DeleteUserID(uuid uuid.UUID) (int, error) {
 func (u *UserService) UpdateUserID(uuid uuid.UUID, chuser ChangeUser) (int, error) {
 	user, err := u.storage.GetUserID(uuid)
 	if err != nil {
-		slog.Error("Ошибка", err)
+		slog.Error("STORAGE: get user failed", "err", err)
 		return 500, errors.New("ошибка при получении данных")
 	}
 	if (chuser.NewPassword != "" && chuser.OldPassword == "") || (chuser.NewPassword == "" && chuser.OldPassword != "") {
@@ -97,38 +97,32 @@ func (u *UserService) UpdateUserID(uuid uuid.UUID, chuser ChangeUser) (int, erro
 	}
 	if ChekChangeEmail(chuser) {
 		exist, erre := u.storage.ExistEmailUser(chuser.Email)
+		if erre != nil {
+			slog.Error("STORAGE: get user failed", "err", erre)
+			return 500, errors.New("ошибка при получении данных")
+		}
 		if exist {
 			return 400, errors.New("пользователь с данным Email уже зарегистрирован")
-		}
-		if erre != nil {
-			slog.Error("Ошибка", erre)
-			return 500, errors.New("ошибка при получении данных")
 		}
 		user.Email = chuser.Email
 	}
 	if ChekChangePass(chuser) {
 		if user.Password != chuser.OldPassword {
-			return 400, errors.New("cтарый пароль не совпадает с введенным")
+			return 400, errors.New("старый пароль не совпадает с введенным")
 		}
 		user.Password = chuser.NewPassword
 	}
 	if errs := u.storage.SaveUser(*user); errs != nil {
-		slog.Error("Ошибка", errs)
+		slog.Error("STORAGE: save user failed", "err", errs)
 		return 500, errors.New("ошибка при сохранении")
 	}
 	return 200, nil
 }
 
 func ChekChangePass(u ChangeUser) bool {
-	if u.NewPassword != "" && u.OldPassword != "" {
-		return true
-	}
-	return false
+	return u.NewPassword != "" && u.OldPassword != ""
 }
 
 func ChekChangeEmail(u ChangeUser) bool {
-	if u.Email != "" {
-		return true
-	}
-	return false
+	return u.Email != ""
 }

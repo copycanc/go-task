@@ -26,64 +26,62 @@ func (h *HandlerUser) List(c *gin.Context) {
 		"status": "OK",
 		"users":  user,
 	})
-	return
 }
 
 // Создать нового пользователя
-func (h HandlerUser) Create(c *gin.Context) {
+func (h *HandlerUser) Create(c *gin.Context) {
 	var user User
-	if errr := c.ShouldBindJSON(&user); errr != nil {
-		message.StatusBadRequestDataH(c, errr)
+	if err := c.ShouldBindJSON(&user); err != nil {
+		message.StatusBadRequestDataH(c, err)
 		return
 	}
 	httpStatus, err := h.userService.EmailExist(user.Email)
-	if httpStatus == 200 {
-		if httpStatus, err = h.userService.CreateUser(user); err != nil {
-			message.StatusHttpError(c, httpStatus, err)
-			return
-		}
-		message.StatusHttpSuccess(c)
+	if httpStatus != 200 {
+		message.StatusHttpError(c, httpStatus, err)
 		return
 	}
-	message.StatusHttpError(c, httpStatus, err)
-	return
+	if httpStatus, err = h.userService.CreateUser(user); err != nil {
+		message.StatusHttpError(c, httpStatus, err)
+		return
+	}
+	message.StatusHttpSuccess(c)
 }
 
 // Получить пользователя по ID
 func (h *HandlerUser) Get(c *gin.Context) {
-	id, _ := uuid.Parse(c.Param("id"))
-	httpStatusE, errE := h.userService.UserExist(id)
-	if httpStatusE == 200 {
-		user, httpStatus, err := h.userService.GetUserID(id)
-		if err != nil {
-			message.StatusHttpError(c, httpStatus, err)
-			return
-		}
-		c.JSONP(httpStatus, gin.H{
-			"status": "ok",
-			"task":   user,
-		})
+	id, ok := parseUUIDParam(c, "id")
+	if !ok {
 		return
 	}
-	message.StatusHttpError(c, httpStatusE, errE)
-	return
+	if !h.ensureUserExists(c, id) {
+		return
+	}
+	user, httpStatus, err := h.userService.GetUserID(id)
+	if err != nil {
+		message.StatusHttpError(c, httpStatus, err)
+		return
+	}
+	c.JSONP(httpStatus, gin.H{
+		"status": "OK",
+		"user":   user,
+	})
 }
 
 // Удалить пользователя по ID
 func (h *HandlerUser) Delete(c *gin.Context) {
-	id, _ := uuid.Parse(c.Param("id"))
-	httpStatus, err := h.userService.UserExist(id)
-	if httpStatus == 200 {
-		httpStatus, err = h.userService.DeleteUserID(id)
-		if err != nil {
-			message.StatusHttpError(c, httpStatus, err)
-			return
-		}
-		message.StatusHttpSuccess(c)
+	id, ok := parseUUIDParam(c, "id")
+	if !ok {
 		return
 	}
-	message.StatusHttpError(c, httpStatus, err)
-	return
+	if !h.ensureUserExists(c, id) {
+		return
+	}
+	httpStatus, err := h.userService.DeleteUserID(id)
+	if err != nil {
+		message.StatusHttpError(c, httpStatus, err)
+		return
+	}
+	message.StatusHttpSuccess(c)
 }
 
 // Изменить пользователя
@@ -93,17 +91,35 @@ func (h *HandlerUser) Update(c *gin.Context) {
 		message.StatusBadRequestDataH(c, errr)
 		return
 	}
-	id, _ := uuid.Parse(c.Param("id"))
-	httpStatus, err := h.userService.UserExist(id)
-	if httpStatus == 200 {
-		httpStatus, err = h.userService.UpdateUserID(id, chuser)
-		if err != nil {
-			message.StatusHttpError(c, httpStatus, err)
-			return
-		}
-		message.StatusHttpSuccess(c)
+	id, ok := parseUUIDParam(c, "id")
+	if !ok {
 		return
 	}
-	message.StatusHttpError(c, httpStatus, err)
-	return
+	if !h.ensureUserExists(c, id) {
+		return
+	}
+	httpStatus, err := h.userService.UpdateUserID(id, chuser)
+	if err != nil {
+		message.StatusHttpError(c, httpStatus, err)
+		return
+	}
+	message.StatusHttpSuccess(c)
+}
+
+func parseUUIDParam(c *gin.Context, name string) (uuid.UUID, bool) {
+	id, err := uuid.Parse(c.Param(name))
+	if err != nil {
+		message.StatusBadRequestDataH(c, err)
+		return uuid.Nil, false
+	}
+	return id, true
+}
+
+func (h *HandlerUser) ensureUserExists(c *gin.Context, id uuid.UUID) bool {
+	httpStatus, err := h.userService.UserExist(id)
+	if httpStatus != 200 {
+		message.StatusHttpError(c, httpStatus, err)
+		return false
+	}
+	return true
 }

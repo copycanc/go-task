@@ -26,7 +26,6 @@ func (h *HandlerTask) List(c *gin.Context) {
 		"status": "OK",
 		"tasks":  taskList,
 	})
-	return
 }
 
 // Создать новую задачу
@@ -41,64 +40,81 @@ func (h *HandlerTask) Create(c *gin.Context) {
 		return
 	}
 	message.StatusHttpSuccess(c)
-	return
 }
 
 // Получить задачу по ID
 func (h *HandlerTask) Get(c *gin.Context) {
-	id, _ := uuid.Parse(c.Param("id"))
-	httpStatusE, errE := h.taskService.TaskExist(id)
-	if httpStatusE == 200 {
-		task, httpStatus, err := h.taskService.GetTaskID(id)
-		if err != nil {
-			message.StatusHttpError(c, httpStatus, err)
-			return
-		}
-		c.JSONP(httpStatus, gin.H{
-			"status": "OK",
-			"task":   task,
-		})
+	id, ok := parseUUIDParam(c, "id")
+	if !ok {
 		return
 	}
-	message.StatusHttpError(c, httpStatusE, errE)
-	return
+	if !h.ensureTaskExists(c, id) {
+		return
+	}
+	task, httpStatus, err := h.taskService.GetTaskID(id)
+	if err != nil {
+		message.StatusHttpError(c, httpStatus, err)
+		return
+	}
+	c.JSONP(httpStatus, gin.H{
+		"status": "OK",
+		"task":   task,
+	})
 }
 
 // Удалить задачу по ID
 func (h *HandlerTask) Delete(c *gin.Context) {
-	id, _ := uuid.Parse(c.Param("id"))
-	httpStatus, err := h.taskService.TaskExist(id)
-	if httpStatus == 200 {
-		httpStatus, err = h.taskService.DeleteTaskID(id)
-		if err != nil {
-			message.StatusHttpError(c, httpStatus, err)
-			return
-		}
-		message.StatusHttpSuccess(c)
+	id, ok := parseUUIDParam(c, "id")
+	if !ok {
 		return
 	}
-	message.StatusHttpError(c, httpStatus, err)
-	return
+	if !h.ensureTaskExists(c, id) {
+		return
+	}
+	httpStatus, err := h.taskService.DeleteTaskID(id)
+	if err != nil {
+		message.StatusHttpError(c, httpStatus, err)
+		return
+	}
+	message.StatusHttpSuccess(c)
 }
 
 // Изменить статус задачи
 func (h *HandlerTask) Update(c *gin.Context) {
-	id, _ := uuid.Parse(c.Param("id"))
+	id, ok := parseUUIDParam(c, "id")
+	if !ok {
+		return
+	}
 	var taskUpdate TaskUpdate
-	if errr := c.ShouldBindJSON(&taskUpdate); errr != nil {
-		message.StatusBadRequestDataH(c, errr)
+	if err := c.ShouldBindJSON(&taskUpdate); err != nil {
+		message.StatusBadRequestDataH(c, err)
 		return
 	}
+	if !h.ensureTaskExists(c, id) {
+		return
+	}
+	httpStatus, err := h.taskService.UpdateTaskID(id, taskUpdate.Status)
+	if err != nil {
+		message.StatusHttpError(c, httpStatus, err)
+		return
+	}
+	message.StatusHttpSuccess(c)
+}
+
+func parseUUIDParam(c *gin.Context, name string) (uuid.UUID, bool) {
+	id, err := uuid.Parse(c.Param(name))
+	if err != nil {
+		message.StatusBadRequestDataH(c, err)
+		return uuid.Nil, false
+	}
+	return id, true
+}
+
+func (h *HandlerTask) ensureTaskExists(c *gin.Context, id uuid.UUID) bool {
 	httpStatus, err := h.taskService.TaskExist(id)
-	if httpStatus == 200 {
-		httpStatus, err = h.taskService.UpdateTaskID(id, taskUpdate.Status)
-		if err != nil {
-			message.StatusHttpError(c, httpStatus, err)
-			return
-		}
-		message.StatusHttpSuccess(c)
-		return
+	if httpStatus != 200 {
+		message.StatusHttpError(c, httpStatus, err)
+		return false
 	}
-	message.StatusHttpError(c, httpStatus, err)
-	return
+	return true
 }
