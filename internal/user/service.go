@@ -32,12 +32,12 @@ func (u *UserService) GetAllUser() (map[uuid.UUID]UserOutput, int, error) {
 
 func (u *UserService) EmailExist(email string) (int, error) {
 	exist, err := u.storage.ExistEmailUser(email)
-	if exist {
-		return 400, errors.New("пользователь с данным Email уже зарегистрирован")
-	}
 	if err != nil {
 		slog.Error("STORAGE: get user failed", "err", err)
 		return 500, errors.New("ошибка при получении данных")
+	}
+	if exist {
+		return 400, errors.New("пользователь с данным Email уже зарегистрирован")
 	}
 	return 200, nil
 }
@@ -58,12 +58,12 @@ func (u *UserService) CreateUser(user User) (int, error) {
 
 func (u *UserService) UserExist(uuid uuid.UUID) (int, error) {
 	exist, err := u.storage.ExistUser(uuid)
-	if !exist {
-		return 404, errors.New("пользователь не найден")
-	}
 	if err != nil {
 		slog.Error("STORAGE: get user failed", "err", err)
 		return 500, errors.New("ошибка при получении данных")
+	}
+	if !exist {
+		return 404, errors.New("пользователь не найден")
 	}
 	return 200, nil
 }
@@ -97,12 +97,12 @@ func (u *UserService) UpdateUserID(uuid uuid.UUID, chuser ChangeUser) (int, erro
 	}
 	if ChekChangeEmail(chuser) {
 		exist, erre := u.storage.ExistEmailUser(chuser.Email)
-		if exist {
-			return 400, errors.New("пользователь с данным Email уже зарегистрирован")
-		}
 		if erre != nil {
 			slog.Error("STORAGE: get user failed", "err", erre)
 			return 500, errors.New("ошибка при получении данных")
+		}
+		if exist {
+			return 400, errors.New("пользователь с данным Email уже зарегистрирован")
 		}
 		user.Email = chuser.Email
 	}
@@ -120,15 +120,9 @@ func (u *UserService) UpdateUserID(uuid uuid.UUID, chuser ChangeUser) (int, erro
 }
 
 func ChekChangePass(u ChangeUser) bool {
-	if u.NewPassword != "" && u.OldPassword != "" {
-		return true
-	}
-	return false
+	return u.NewPassword != "" && u.OldPassword != ""
 }
 
 func ChekChangeEmail(u ChangeUser) bool {
-	if u.Email != "" {
-		return true
-	}
-	return false
+	return u.Email != ""
 }
