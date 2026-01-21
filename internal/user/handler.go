@@ -29,7 +29,7 @@ func (h *HandlerUser) List(c *gin.Context) {
 }
 
 // Создать нового пользователя
-func (h HandlerUser) Create(c *gin.Context) {
+func (h *HandlerUser) Create(c *gin.Context) {
 	var user User
 	if err := c.ShouldBindJSON(&user); err != nil {
 		message.StatusBadRequestDataH(c, err)
@@ -63,7 +63,7 @@ func (h *HandlerUser) Get(c *gin.Context) {
 	}
 	c.JSONP(httpStatus, gin.H{
 		"status": "ok",
-		"task":   user,
+		"user":   user,
 	})
 }
 
