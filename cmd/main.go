@@ -1,7 +1,7 @@
 package main
 
 import (
-	"go-br-task/internal"
+	"go-br-task/internal/api"
 	"go-br-task/internal/task"
 	"go-br-task/internal/user"
 	"log/slog"
@@ -13,15 +13,15 @@ import (
 )
 
 func main() {
-	storage_task := task.NewMapStorageTask()
-	storage_user := user.NewMapStorageUser()
-	service_task := task.NewTaskService(storage_task)
-	service_user := user.NewUserService(storage_user)
-	handler_user := user.NewHandlerUser(service_user)
-	handler_task := task.NewHandler(service_task)
+	storageTask := task.NewMapStorageTask()
+	storageUser := user.NewMapStorageUser()
+	serviceTask := task.NewTaskService(storageTask)
+	serviceUser := user.NewUserService(storageUser)
+	handlerUser := user.NewHandlerUser(serviceUser)
+	handlerTask := task.NewHandler(serviceTask)
 
 	r := gin.Default()
-	internal.Init(r, handler_task, handler_user)
+	api.Init(r, handlerTask, handlerUser)
 	go r.Run(":8080")
 
 	Shutdown()

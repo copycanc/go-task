@@ -16,7 +16,7 @@ func NewHandlerUser(userService *UserService) *HandlerUser {
 }
 
 // Получить всеx пользователей
-func (h *HandlerUser) GetUser(c *gin.Context) {
+func (h *HandlerUser) List(c *gin.Context) {
 	user, httpStatus, err := h.userService.GetAllUser()
 	if err != nil {
 		message.StatusHttpError(c, httpStatus, err)
@@ -30,7 +30,7 @@ func (h *HandlerUser) GetUser(c *gin.Context) {
 }
 
 // Создать нового пользователя
-func (h HandlerUser) CreateUser(c *gin.Context) {
+func (h HandlerUser) Create(c *gin.Context) {
 	var user User
 	if errr := c.ShouldBindJSON(&user); errr != nil {
 		message.StatusBadRequestDataH(c, errr)
@@ -50,7 +50,7 @@ func (h HandlerUser) CreateUser(c *gin.Context) {
 }
 
 // Получить пользователя по ID
-func (h *HandlerUser) GetUserID(c *gin.Context) {
+func (h *HandlerUser) Get(c *gin.Context) {
 	id, _ := uuid.Parse(c.Param("id"))
 	httpStatusE, errE := h.userService.UserExist(id)
 	if httpStatusE == 200 {
@@ -70,7 +70,7 @@ func (h *HandlerUser) GetUserID(c *gin.Context) {
 }
 
 // Удалить пользователя по ID
-func (h *HandlerUser) DeleteUserID(c *gin.Context) {
+func (h *HandlerUser) Delete(c *gin.Context) {
 	id, _ := uuid.Parse(c.Param("id"))
 	httpStatus, err := h.userService.UserExist(id)
 	if httpStatus == 200 {
@@ -87,7 +87,7 @@ func (h *HandlerUser) DeleteUserID(c *gin.Context) {
 }
 
 // Изменить пользователя
-func (h *HandlerUser) UpdateUserID(c *gin.Context) {
+func (h *HandlerUser) Update(c *gin.Context) {
 	var chuser ChangeUser
 	if errr := c.ShouldBindJSON(&chuser); errr != nil {
 		message.StatusBadRequestDataH(c, errr)
