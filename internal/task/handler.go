@@ -16,7 +16,7 @@ func NewHandler(taskService *TasksService) *HandlerTask {
 }
 
 // Получить все задачи
-func (h *HandlerTask) GetTask(c *gin.Context) {
+func (h *HandlerTask) List(c *gin.Context) {
 	taskList, httpStatus, err := h.taskService.GetAllTask()
 	if err != nil {
 		message.StatusHttpError(c, httpStatus, err)
@@ -30,7 +30,7 @@ func (h *HandlerTask) GetTask(c *gin.Context) {
 }
 
 // Создать новую задачу
-func (h *HandlerTask) CreateTask(c *gin.Context) {
+func (h *HandlerTask) Create(c *gin.Context) {
 	var task Task
 	if err := c.ShouldBindJSON(&task); err != nil {
 		message.StatusBadRequestDataH(c, err)
@@ -45,7 +45,7 @@ func (h *HandlerTask) CreateTask(c *gin.Context) {
 }
 
 // Получить задачу по ID
-func (h *HandlerTask) GetTaskID(c *gin.Context) {
+func (h *HandlerTask) Get(c *gin.Context) {
 	id, _ := uuid.Parse(c.Param("id"))
 	httpStatusE, errE := h.taskService.TaskExist(id)
 	if httpStatusE == 200 {
@@ -65,7 +65,7 @@ func (h *HandlerTask) GetTaskID(c *gin.Context) {
 }
 
 // Удалить задачу по ID
-func (h *HandlerTask) DeleteTaskID(c *gin.Context) {
+func (h *HandlerTask) Delete(c *gin.Context) {
 	id, _ := uuid.Parse(c.Param("id"))
 	httpStatus, err := h.taskService.TaskExist(id)
 	if httpStatus == 200 {
@@ -82,7 +82,7 @@ func (h *HandlerTask) DeleteTaskID(c *gin.Context) {
 }
 
 // Изменить статус задачи
-func (h *HandlerTask) UpdateTaskID(c *gin.Context) {
+func (h *HandlerTask) Update(c *gin.Context) {
 	id, _ := uuid.Parse(c.Param("id"))
 	var taskUpdate TaskUpdate
 	if errr := c.ShouldBindJSON(&taskUpdate); errr != nil {
