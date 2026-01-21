@@ -108,7 +108,7 @@ func (u *UserService) UpdateUserID(uuid uuid.UUID, chuser ChangeUser) (int, erro
 	}
 	if ChekChangePass(chuser) {
 		if user.Password != chuser.OldPassword {
-			return 400, errors.New("cтарый пароль не совпадает с введенным")
+			return 400, errors.New("старый пароль не совпадает с введенным")
 		}
 		user.Password = chuser.NewPassword
 	}
