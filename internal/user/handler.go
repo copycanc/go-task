@@ -36,15 +36,15 @@ func (h *HandlerUser) Create(c *gin.Context) {
 		return
 	}
 	httpStatus, err := h.userService.EmailExist(user.Email)
-	if httpStatus == 200 {
-		if httpStatus, err = h.userService.CreateUser(user); err != nil {
-			message.StatusHttpError(c, httpStatus, err)
-			return
-		}
-		message.StatusHttpSuccess(c)
+	if httpStatus != 200 {
+		message.StatusHttpError(c, httpStatus, err)
 		return
 	}
-	message.StatusHttpError(c, httpStatus, err)
+	if httpStatus, err = h.userService.CreateUser(user); err != nil {
+		message.StatusHttpError(c, httpStatus, err)
+		return
+	}
+	message.StatusHttpSuccess(c)
 }
 
 // Получить пользователя по ID
@@ -62,7 +62,7 @@ func (h *HandlerUser) Get(c *gin.Context) {
 		return
 	}
 	c.JSONP(httpStatus, gin.H{
-		"status": "ok",
+		"status": "OK",
 		"user":   user,
 	})
 }
