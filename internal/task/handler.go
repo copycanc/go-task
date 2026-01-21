@@ -48,20 +48,18 @@ func (h *HandlerTask) Get(c *gin.Context) {
 	if !ok {
 		return
 	}
-	httpStatusE, errE := h.taskService.TaskExist(id)
-	if httpStatusE == 200 {
-		task, httpStatus, err := h.taskService.GetTaskID(id)
-		if err != nil {
-			message.StatusHttpError(c, httpStatus, err)
-			return
-		}
-		c.JSONP(httpStatus, gin.H{
-			"status": "OK",
-			"task":   task,
-		})
+	if !h.ensureTaskExist(c, id) {
 		return
 	}
-	message.StatusHttpError(c, httpStatusE, errE)
+	task, httpStatus, err := h.taskService.GetTaskID(id)
+	if err != nil {
+		message.StatusHttpError(c, httpStatus, err)
+		return
+	}
+	c.JSONP(httpStatus, gin.H{
+		"status": "OK",
+		"task":   task,
+	})
 }
 
 // Удалить задачу по ID
@@ -70,17 +68,15 @@ func (h *HandlerTask) Delete(c *gin.Context) {
 	if !ok {
 		return
 	}
-	httpStatus, err := h.taskService.TaskExist(id)
-	if httpStatus == 200 {
-		httpStatus, err = h.taskService.DeleteTaskID(id)
-		if err != nil {
-			message.StatusHttpError(c, httpStatus, err)
-			return
-		}
-		message.StatusHttpSuccess(c)
+	if !h.ensureTaskExist(c, id) {
 		return
 	}
-	message.StatusHttpError(c, httpStatus, err)
+	httpStatus, err := h.taskService.DeleteTaskID(id)
+	if err != nil {
+		message.StatusHttpError(c, httpStatus, err)
+		return
+	}
+	message.StatusHttpSuccess(c)
 }
 
 // Изменить статус задачи
@@ -94,17 +90,15 @@ func (h *HandlerTask) Update(c *gin.Context) {
 		message.StatusBadRequestDataH(c, err)
 		return
 	}
-	httpStatus, err := h.taskService.TaskExist(id)
-	if httpStatus == 200 {
-		httpStatus, err = h.taskService.UpdateTaskID(id, taskUpdate.Status)
-		if err != nil {
-			message.StatusHttpError(c, httpStatus, err)
-			return
-		}
-		message.StatusHttpSuccess(c)
+	if !h.ensureTaskExist(c, id) {
 		return
 	}
-	message.StatusHttpError(c, httpStatus, err)
+	httpStatus, err := h.taskService.UpdateTaskID(id, taskUpdate.Status)
+	if err != nil {
+		message.StatusHttpError(c, httpStatus, err)
+		return
+	}
+	message.StatusHttpSuccess(c)
 }
 
 func parseUUIDParam(c *gin.Context, name string) (uuid.UUID, bool) {
@@ -114,4 +108,13 @@ func parseUUIDParam(c *gin.Context, name string) (uuid.UUID, bool) {
 		return uuid.Nil, false
 	}
 	return id, true
+}
+
+func (h *HandlerTask) ensureTaskExist(c *gin.Context, id uuid.UUID) bool {
+	httpStatus, err := h.taskService.TaskExist(id)
+	if httpStatus != 200 {
+		message.StatusHttpError(c, httpStatus, err)
+		return false
+	}
+	return true
 }
