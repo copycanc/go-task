@@ -48,7 +48,7 @@ func (h *HandlerTask) Get(c *gin.Context) {
 	if !ok {
 		return
 	}
-	if !h.ensureTaskExist(c, id) {
+	if !h.ensureTaskExists(c, id) {
 		return
 	}
 	task, httpStatus, err := h.taskService.GetTaskID(id)
@@ -68,7 +68,7 @@ func (h *HandlerTask) Delete(c *gin.Context) {
 	if !ok {
 		return
 	}
-	if !h.ensureTaskExist(c, id) {
+	if !h.ensureTaskExists(c, id) {
 		return
 	}
 	httpStatus, err := h.taskService.DeleteTaskID(id)
@@ -90,7 +90,7 @@ func (h *HandlerTask) Update(c *gin.Context) {
 		message.StatusBadRequestDataH(c, err)
 		return
 	}
-	if !h.ensureTaskExist(c, id) {
+	if !h.ensureTaskExists(c, id) {
 		return
 	}
 	httpStatus, err := h.taskService.UpdateTaskID(id, taskUpdate.Status)
@@ -110,7 +110,7 @@ func parseUUIDParam(c *gin.Context, name string) (uuid.UUID, bool) {
 	return id, true
 }
 
-func (h *HandlerTask) ensureTaskExist(c *gin.Context, id uuid.UUID) bool {
+func (h *HandlerTask) ensureTaskExists(c *gin.Context, id uuid.UUID) bool {
 	httpStatus, err := h.taskService.TaskExist(id)
 	if httpStatus != 200 {
 		message.StatusHttpError(c, httpStatus, err)
