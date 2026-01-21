@@ -21,7 +21,7 @@ func main() {
 	serviceAuth := auth.NewAuthService(storageUser)
 	handlerUser := user.NewHandlerUser(serviceUser)
 	handlerTask := task.NewHandler(serviceTask)
-	handlerAuth := auth.NewHandlerAuth(serviceAuth)
+	handlerAuth := auth.NewHandlerAuth(serviceAuth, "test-secret")
 
 	r := gin.Default()
 	api.Init(r, handlerTask, handlerUser, handlerAuth)

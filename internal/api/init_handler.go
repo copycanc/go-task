@@ -28,7 +28,7 @@ func Init(r *gin.Engine, h *task.HandlerTask, u *user.HandlerUser, a *auth.Handl
 		users.PUT("/:id", u.Update)
 	}
 
-	r.POST("/login")
+	r.POST("/login", a.Login)
 	r.GET("/profile")
 
 }

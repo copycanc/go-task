@@ -11,5 +11,5 @@ type UserStorage interface {
 	GetUserID(id uuid.UUID) (*User, error)
 	ExistUser(id uuid.UUID) (bool, error)
 	DeleteUser(id uuid.UUID) error
-	GetUserName(name string) (*User, error)
+	GetUserEmail(name string) (*User, error)
 }
