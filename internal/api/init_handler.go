@@ -1,6 +1,7 @@
 package api
 
 import (
+	"go-br-task/internal/auth"
 	"go-br-task/internal/task"
 	"go-br-task/internal/user"
 
@@ -8,7 +9,7 @@ import (
 )
 
 // Функция для инициализации эндпоинтов
-func Init(r *gin.Engine, h *task.HandlerTask, u *user.HandlerUser) {
+func Init(r *gin.Engine, h *task.HandlerTask, u *user.HandlerUser, a *auth.HandlerAuth) {
 	tasks := r.Group("/tasks")
 	{
 		tasks.GET("", h.List)
@@ -26,5 +27,8 @@ func Init(r *gin.Engine, h *task.HandlerTask, u *user.HandlerUser) {
 		users.DELETE("/:id", u.Delete)
 		users.PUT("/:id", u.Update)
 	}
+
+	r.POST("/login")
+	r.GET("/profile")
 
 }

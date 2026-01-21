@@ -46,3 +46,12 @@ func (m *MapStorageUser) DeleteUser(id uuid.UUID) error {
 	delete(m.storageUserMap, id)
 	return nil
 }
+
+func (m *MapStorageUser) GetUserName(name string) (*User, error) {
+	for _, user := range m.storageUserMap {
+		if user.Name == name {
+			return &user, nil
+		}
+	}
+	return nil, nil
+}
