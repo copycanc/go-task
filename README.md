@@ -2,11 +2,18 @@
 
 Команда сборки образа с приложением:
 ```
-docker build -t task-app:v{x} .
+docker build -t task-app:{x} .
 ```
 
-Команда для запуска контейнера PostgreSQL:
+Структура файла .env 
 ```
-docker run --name test-pg -d -e POSTGRES_USER=app -e POSTGRES_PASSWORD=app -e POSTGRES_DB=app -p 5432:5432 postgres:16-alpine
+POSTGRES_USER=***
+POSTGRES_PASSWORD=***
+POSTGRES_DB=***
+```
+
+Собрать приложение
+```
+docker compose up
 ```
 
