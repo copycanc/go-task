@@ -2,6 +2,8 @@ package main
 
 import (
 	"go-br-task/internal/api"
+	"go-br-task/internal/config"
+	"go-br-task/internal/db"
 	"go-br-task/internal/task"
 	"go-br-task/internal/user"
 	"log/slog"
@@ -13,7 +15,19 @@ import (
 )
 
 func main() {
-	storageTask := task.NewMapStorageTask()
+	configPG := config.NewPostgresSQLCfg()
+	pool, err := db.NewPostgresPool(configPG)
+	if err != nil {
+		slog.Error("STORAGE: ошибка подключения к БД " + err.Error())
+		return
+	}
+	defer pool.Close()
+	if err := task.CreateTable(pool); err != nil {
+		slog.Error("STORAGE: ошибка при создании таблиц " + err.Error())
+		return
+	}
+
+	storageTask := task.NewPGStorageTask(pool)
 	storageUser := user.NewMapStorageUser()
 	serviceTask := task.NewTaskService(storageTask)
 	serviceUser := user.NewUserService(storageUser)
