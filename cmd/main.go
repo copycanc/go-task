@@ -22,13 +22,13 @@ func main() {
 		return
 	}
 	defer pool.Close()
-	if err := task.CreateTable(pool); err != nil {
+	if err := db.CreateTable(pool); err != nil {
 		slog.Error("STORAGE: ошибка при создании таблиц " + err.Error())
 		return
 	}
 
 	storageTask := task.NewPGStorageTask(pool)
-	storageUser := user.NewMapStorageUser()
+	storageUser := user.NewPGStorageUser(pool)
 	serviceTask := task.NewTaskService(storageTask)
 	serviceUser := user.NewUserService(storageUser)
 	handlerUser := user.NewHandlerUser(serviceUser)

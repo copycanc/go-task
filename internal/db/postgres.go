@@ -24,3 +24,30 @@ func NewPostgresPool(cfg *config.PostgresCfg) (*pgxpool.Pool, error) {
 	}
 	return pool, nil
 }
+
+func CreateTable(pool *pgxpool.Pool) error {
+	ctx := context.Background()
+	createTask := `CREATE TABLE IF NOT EXISTS tasks (
+					id   UUID PRIMARY KEY,
+					title TEXT NOT NULL,
+					description TEXT NOT NULL,
+					status TEXT NOT NULL,
+					created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+                    completed_at TIMESTAMP WITH TIME ZONE             
+					)`
+	createUser := `CREATE TABLE IF NOT EXISTS users (
+					id   UUID PRIMARY KEY,
+					name TEXT NOT NULL,
+					email TEXT NOT NULL,
+					password TEXT NOT NULL         
+					)`
+	_, err := pool.Exec(ctx, createTask)
+	if err != nil {
+		return err
+	}
+	_, err = pool.Exec(ctx, createUser)
+	if err != nil {
+		return err
+	}
+	return nil
+}
